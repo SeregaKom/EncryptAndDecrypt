@@ -170,7 +170,7 @@ namespace EncryptAndDecryptFileTXT
         {
             if (typeCryption == "Encryption") 
             {
-                using (StreamReader sr = new StreamReader("text.txt", Encoding.GetEncoding("windows-1251"))) 
+                using (StreamReader sr = new StreamReader("text.txt")) 
                 {
                     if (sr != null)
                     {
