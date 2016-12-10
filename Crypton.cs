@@ -20,13 +20,26 @@ namespace EncryptAndDecryptFileTXT
         {
             int val = 0;
             int numberOfColumns = 0;
+            int numberOfMatrices = 0;
+            int index = 0;
             SortedDictionary<char, string> dictonaryColumns = new SortedDictionary<char, string>();
             char[] charArray = key.ToCharArray();
+            int keyLenght = key.Length;
             ICollection<char> keys = dictonaryColumns.Keys;//коллекция ключей
-            
-            numberOfColumns = OriginalText.Length / key.Length;
+            ICollection<string> columns = dictonaryColumns.Values;
+            char[,] charMatrice = new char[keyLenght, keyLenght];
+
+            numberOfMatrices = OriginalText.Length / (keyLenght * keyLenght);
+            if (numberOfMatrices * keyLenght * keyLenght < OriginalText.Length)
+                numberOfMatrices++;
+            while (OriginalText.Length < numberOfMatrices * keyLenght * keyLenght) 
+            {
+                OriginalText += " ";
+            }
+            numberOfColumns = OriginalText.Length / keyLenght;
             for (int i = 0; i < numberOfColumns; i++)
             {
+                index = 0;
                 dictonaryColumns.Clear();
                 for (int j = 0; j < key.Length; j++)
                 {
@@ -39,22 +52,32 @@ namespace EncryptAndDecryptFileTXT
                         break;
                 }
                 i = val / key.Length - 1;
-                foreach (char k in keys)
-                    EncryptText += dictonaryColumns[k];
-            }
-            if (OriginalText.Length > numberOfColumns * key.Length)
-            {
-                EncryptText += OriginalText.Substring(numberOfColumns * key.Length);
-            }
-            using (StreamWriter sw = File.CreateText("encrypt_text.txt"))
-            {
-                if (sw != null)
+
+                foreach (string c in columns)
                 {
-                    for (int i = 0; i < EncryptText.Length; i++)
-                        sw.Write(EncryptText[i]);
+                    for (int i1 = 0; i1 < keyLenght; i1++)
+                    {
+                        charMatrice[i1, index] = c[i1];
+                    }
+                    index++;
                 }
-                else
-                    Console.WriteLine("Error!!! File for writer not found!");
+                WriteInEncryptText(keyLenght, charMatrice);
+            }
+            WriteOfTextInFile("encrypt_text.txt", EncryptText);
+        }
+        /// <summary>
+        /// Запись текста из массива в зашифрованный текст
+        /// </summary>
+        /// <param name="keyLenght"></param>
+        /// <param name="charMatrice"></param>
+        public void WriteInEncryptText(int keyLenght, char[,] charMatrice)
+        {
+            for (int i = 0; i < keyLenght; i++)
+            {
+                for (int j = 0; j < keyLenght; j++)
+                {
+                    EncryptText += charMatrice[i, j];
+                }
             }
         }
         /// <summary>
@@ -107,6 +130,7 @@ namespace EncryptAndDecryptFileTXT
                     Console.WriteLine("Error!!! File for writer not found!");
             }
         }
+        
         /// <summary>
         /// Ввод слова-ключа
         /// </summary>
@@ -119,7 +143,7 @@ namespace EncryptAndDecryptFileTXT
             do
             {
                 Console.WriteLine("Введите слово-ключ, не содержащее одинаковый буквы:");
-                key = Console.ReadLine();
+                key = "рев";// Console.ReadLine();
                 for (int i = 0; i < key.Length; i++)
                 {
                     if (flag != true)
@@ -139,6 +163,9 @@ namespace EncryptAndDecryptFileTXT
             } while (flag);
             return key;
         }
+        /// <summary>
+        /// Выбор операции (Шифрование или Дешифрование)
+        /// </summary>
         public void ChoiceOfOperation()
         {
             bool flag = true;
@@ -146,19 +173,21 @@ namespace EncryptAndDecryptFileTXT
             do
             {
                 Console.WriteLine("Выберите вид операции (Шифрование = E, Расширование = D):");
-                operation = Console.ReadLine();
+                operation = "E";// Console.ReadLine();
                 switch(operation)
                 {
                     case "E":
                         Console.WriteLine("Шифрование текста");
-                        OpenFileText("Encryption");
+                        OpenFileText("text.txt");
+                        Console.WriteLine("Исходный текст: \n" + OriginalText);
                         Encryption(TestKey());
                         Console.WriteLine("Зашифрованный текст: \n{0}", EncryptText);
                         flag = false;
                         break;
                     case "D":
                         Console.WriteLine("Расшифрование текста");
-                        OpenFileText("Decryption");
+                        OpenFileText("encrypt_text.txt");
+                        Console.WriteLine("Зашифрованный текст: \n" + EncryptText);
                         Decryption(TestKey());
                         Console.WriteLine("Расшифрованный текст: \n{0}", OriginalText);
                         flag = false;
@@ -166,36 +195,43 @@ namespace EncryptAndDecryptFileTXT
                 }
             } while (flag);
         }
-        public void OpenFileText(string typeCryption)
+        /// <summary>
+        /// Открытие файла 
+        /// </summary>
+        /// <param name="typeCryption"></param>
+        public void OpenFileText(string nameFile)
         {
-            if (typeCryption == "Encryption") 
+            using (StreamReader sr = new StreamReader(nameFile))
             {
-                using (StreamReader sr = new StreamReader("text.txt")) 
+                if (sr != null)
                 {
-                    if (sr != null)
+                    if (nameFile == "text.txt")
                     {
                         OriginalText = sr.ReadToEnd();
-                        Console.WriteLine("Оригинальный текст: \n{0}", OriginalText);
                     }
                     else
-                        Console.WriteLine("Error!!! File text.txt not found!");
+                        EncryptText = sr.ReadToEnd();
                 }
+                else
+                    Console.WriteLine("Error!!! File text not found!");
             }
-            else
+        }
+        /// <summary>
+        /// Запись в файл
+        /// </summary>
+        /// <param name="nameFile"></param>
+        /// <param name="typeFile"></param>
+        public void WriteOfTextInFile(string nameFile, string typeFile)
+        {
+            using (StreamWriter sw = new StreamWriter(nameFile))
             {
-                if(typeCryption == "Decryption")
+                if (sw != null)
                 {
-                    using (StreamReader sr = new StreamReader("encrypt_text.txt"))
-                    {
-                        if (sr != null)
-                        {
-                            EncryptText = sr.ReadToEnd();
-                            Console.WriteLine("Зашифрованный текст: \n{0}", EncryptText);
-                        }
-                        else
-                            Console.WriteLine("Error!!! File encrypt_text.txt not found!");
-                    }
+                    for (int i = 0; i < typeFile.Length; i++)
+                        sw.Write(typeFile[i]);
                 }
+                else
+                    Console.WriteLine("Error!!! File for writer not found!");
             }
         }
     }
