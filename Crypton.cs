@@ -19,28 +19,26 @@ namespace EncryptAndDecryptFileTXT
         public void Encryption(string key)
         {
             int val = 0;
-            int numberOfColumns = 0;
-            int numberOfMatrices = 0;
-            int index = 0;
-            SortedDictionary<char, string> dictonaryColumns = new SortedDictionary<char, string>();
-            char[] charArray = key.ToCharArray();
-            int keyLenght = key.Length;
-            ICollection<char> keys = dictonaryColumns.Keys;//коллекция ключей
-            ICollection<string> columns = dictonaryColumns.Values;
-            char[,] charMatrice = new char[keyLenght, keyLenght];
+            int numberOfColumns = 0; //количество столбцов
+            int numberOfMatrices = 0;//количество матриц
+            int index = 0;           //индекс для заполнения матрицы
+            SortedDictionary<char, string> dictonaryColumns = new SortedDictionary<char, string>();//словарь сортированных по ключу столбцов 
+            char[] charArray = key.ToCharArray();//массив char, в котором находится ключ 
+            int keyLenght = key.Length;//длина ключа
+            ICollection<string> columns = dictonaryColumns.Values;//коллекция значей (столбцов)
+            char[,] charMatrice = new char[keyLenght, keyLenght]; //матрица размером длина ключа * длина ключа
 
             numberOfMatrices = OriginalText.Length / (keyLenght * keyLenght);
             if (numberOfMatrices * keyLenght * keyLenght < OriginalText.Length)
                 numberOfMatrices++;
-            while (OriginalText.Length < numberOfMatrices * keyLenght * keyLenght) 
-            {
+            while (OriginalText.Length < numberOfMatrices * keyLenght * keyLenght)
                 OriginalText += " ";
-            }
             numberOfColumns = OriginalText.Length / keyLenght;
             for (int i = 0; i < numberOfColumns; i++)
             {
                 index = 0;
                 dictonaryColumns.Clear();
+                //сортировка по ключу
                 for (int j = 0; j < key.Length; j++)
                 {
                     if (i + j < numberOfColumns)
@@ -52,7 +50,7 @@ namespace EncryptAndDecryptFileTXT
                         break;
                 }
                 i = val / key.Length - 1;
-
+                //записываем столбы матрицу
                 foreach (string c in columns)
                 {
                     for (int i1 = 0; i1 < keyLenght; i1++)
@@ -61,6 +59,7 @@ namespace EncryptAndDecryptFileTXT
                     }
                     index++;
                 }
+                //записываем в EncryptText
                 WriteInEncryptText(keyLenght, charMatrice);
             }
             WriteOfTextInFile("encrypt_text.txt", EncryptText);
@@ -87,63 +86,87 @@ namespace EncryptAndDecryptFileTXT
         public void Decryption(string key)
         {
             //Дешифрование будет проводиться обратным путем, только нужно расставить столбцы в соответствии с ключом, а это проблема еще та
+            int index = 0;
             int val = 0;
             int numberOfColumns = 0;
             Dictionary<char, string> dictonaryColumns = new Dictionary<char, string>();
-            char[] charArray = key.ToCharArray();
-            Array.Sort(charArray);
             char[] charArrayKey = key.ToCharArray();
+            List<string> listColumns = new List<string>(key.Length);
+            char[,] charMatrice = new char[key.Length, key.Length]; //матрица размером длина ключа * длина ключа
 
             numberOfColumns = EncryptText.Length / key.Length;
+
             for (int i = 0; i < numberOfColumns; i++)
             {
+                index = 0;
                 dictonaryColumns.Clear();
+                listColumns.Clear();
                 for (int j = 0; j < key.Length; j++)
                 {
                     if (i + j < numberOfColumns)
                     {
-                        dictonaryColumns.Add(charArray[j], EncryptText.Substring(val, key.Length));
+                        listColumns.Add(EncryptText.Substring(val, key.Length));
                         val += key.Length;
                     }
                     else
                         break;
                 }
                 i = val / key.Length - 1;
+                //записываем столбы матрицу
+                foreach (string l in listColumns)
+                {
+                    for (int i1 = 0; i1 < key.Length; i1++)
+                    {
+                        charMatrice[i1, index] = l[i1];
+                    }
+                    index++;
+                }
+                dictonaryColumns = ReadFromEncryptText(key, charMatrice);
                 foreach (char c in charArrayKey)
                 {
                     if (dictonaryColumns.ContainsKey(c))
                         OriginalText += dictonaryColumns[c];
                 }
             }
-            if (EncryptText.Length > numberOfColumns * key.Length)
-            {
-                OriginalText += EncryptText.Substring(numberOfColumns * key.Length);
-            }
-            using (StreamWriter sw = new StreamWriter("text.txt"))
-            {
-                if (sw != null)
-                {
-                    for (int i = 0; i < OriginalText.Length; i++)
-                        sw.Write(OriginalText[i]);
-                }
-                else
-                    Console.WriteLine("Error!!! File for writer not found!");
-            }
+            WriteOfTextInFile("text.txt", OriginalText);
         }
-        
+        /// <summary>
+        /// Считывание из зашифрованного текста в массив
+        /// </summary>
+        /// <param name="keyLengt"></param>
+        /// <returns></returns>
+        private Dictionary<char, string> ReadFromEncryptText(string key, char[,] charMatrice)
+        {
+            string str = "";
+            char[] charArraySort = key.ToCharArray();
+            Array.Sort(charArraySort);
+            Dictionary<char, string> dictionaryColumns = new Dictionary<char, string>(key.Length);
+            for (int i = 0; i < key.Length; i++)
+            {
+                for (int j = 0; j < key.Length; j++)
+                {
+                    str += charMatrice[i, j];
+                }
+                dictionaryColumns.Add(charArraySort[i], str);
+                str = "";
+            }
+            return dictionaryColumns;
+        }
         /// <summary>
         /// Ввод слова-ключа
         /// </summary>
         /// <returns></returns>
         public string TestKey()
         {
-            string key = "";
-            bool flag = false;
+            string key;
+            bool flag;
 
             do
             {
+                flag = false;
+                key = "";
                 Console.WriteLine("Введите слово-ключ, не содержащее одинаковый буквы:");
-                key = "рев";// Console.ReadLine();
+                key = Console.ReadLine();
                 for (int i = 0; i < key.Length; i++)
                 {
                     if (flag != true)
@@ -173,24 +196,38 @@ namespace EncryptAndDecryptFileTXT
             do
             {
                 Console.WriteLine("Выберите вид операции (Шифрование = E, Расширование = D):");
-                operation = "E";// Console.ReadLine();
+                operation = Console.ReadLine();
                 switch(operation)
                 {
                     case "E":
+                        SetColorConsole(true);
                         Console.WriteLine("Шифрование текста");
                         OpenFileText("text.txt");
-                        Console.WriteLine("Исходный текст: \n" + OriginalText);
+                        Console.WriteLine("Исходный текст:");
+                        SetColorConsole(false);
+                        Console.WriteLine(OriginalText);
+                        SetColorConsole(true);
                         Encryption(TestKey());
-                        Console.WriteLine("Зашифрованный текст: \n{0}", EncryptText);
-                        flag = false;
+                        Console.WriteLine("Зашифрованный текст:");
+                        SetColorConsole(false);
+                        Console.WriteLine(EncryptText);
+                        OriginalText = "";
+                        //flag = false;
                         break;
                     case "D":
-                        Console.WriteLine("Расшифрование текста");
+                        SetColorConsole(true);
+                        Console.WriteLine("Дешифрование текста");
                         OpenFileText("encrypt_text.txt");
-                        Console.WriteLine("Зашифрованный текст: \n" + EncryptText);
+                        Console.WriteLine("Исходный текст:");
+                        SetColorConsole(false);
+                        Console.WriteLine(EncryptText);
+                        SetColorConsole(true);
                         Decryption(TestKey());
-                        Console.WriteLine("Расшифрованный текст: \n{0}", OriginalText);
-                        flag = false;
+                        Console.WriteLine("Расшифрованный текст:");
+                        SetColorConsole(false);
+                        Console.WriteLine(OriginalText);
+                        EncryptText = "";
+                        //flag = false;
                         break;
                 }
             } while (flag);
@@ -233,6 +270,13 @@ namespace EncryptAndDecryptFileTXT
                 else
                     Console.WriteLine("Error!!! File for writer not found!");
             }
+        }
+        private void SetColorConsole(bool fl)
+        {
+            if (fl)
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+            else
+                Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }
