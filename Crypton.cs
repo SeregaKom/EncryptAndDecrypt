@@ -62,14 +62,13 @@ namespace EncryptAndDecryptFileTXT
                 //записываем в EncryptText
                 WriteInEncryptText(keyLenght, charMatrice);
             }
-            WriteOfTextInFile("encrypt_text.txt", EncryptText);
         }
         /// <summary>
         /// Запись текста из массива в зашифрованный текст
         /// </summary>
         /// <param name="keyLenght"></param>
         /// <param name="charMatrice"></param>
-        public void WriteInEncryptText(int keyLenght, char[,] charMatrice)
+        private void WriteInEncryptText(int keyLenght, char[,] charMatrice)
         {
             for (int i = 0; i < keyLenght; i++)
             {
@@ -128,7 +127,6 @@ namespace EncryptAndDecryptFileTXT
                         OriginalText += dictonaryColumns[c];
                 }
             }
-            WriteOfTextInFile("text.txt", OriginalText);
         }
         /// <summary>
         /// Считывание из зашифрованного текста в массив
@@ -185,98 +183,6 @@ namespace EncryptAndDecryptFileTXT
                 }
             } while (flag);
             return key;
-        }
-        /// <summary>
-        /// Выбор операции (Шифрование или Дешифрование)
-        /// </summary>
-        public void ChoiceOfOperation()
-        {
-            bool flag = true;
-            string operation = "";
-            do
-            {
-                Console.WriteLine("Выберите вид операции (Шифрование = E, Расширование = D):");
-                operation = Console.ReadLine();
-                switch(operation)
-                {
-                    case "E":
-                        SetColorConsole(true);
-                        Console.WriteLine("Шифрование текста");
-                        OpenFileText("text.txt");
-                        Console.WriteLine("Исходный текст:");
-                        SetColorConsole(false);
-                        Console.WriteLine(OriginalText);
-                        SetColorConsole(true);
-                        Encryption(TestKey());
-                        Console.WriteLine("Зашифрованный текст:");
-                        SetColorConsole(false);
-                        Console.WriteLine(EncryptText);
-                        OriginalText = "";
-                        //flag = false;
-                        break;
-                    case "D":
-                        SetColorConsole(true);
-                        Console.WriteLine("Дешифрование текста");
-                        OpenFileText("encrypt_text.txt");
-                        Console.WriteLine("Исходный текст:");
-                        SetColorConsole(false);
-                        Console.WriteLine(EncryptText);
-                        SetColorConsole(true);
-                        Decryption(TestKey());
-                        Console.WriteLine("Расшифрованный текст:");
-                        SetColorConsole(false);
-                        Console.WriteLine(OriginalText);
-                        EncryptText = "";
-                        //flag = false;
-                        break;
-                }
-            } while (flag);
-        }
-        /// <summary>
-        /// Открытие файла 
-        /// </summary>
-        /// <param name="typeCryption"></param>
-        public void OpenFileText(string nameFile)
-        {
-            using (StreamReader sr = new StreamReader(nameFile))
-            {
-                if (sr != null)
-                {
-                    if (nameFile == "text.txt")
-                    {
-                        OriginalText = sr.ReadToEnd();
-                    }
-                    else
-                        EncryptText = sr.ReadToEnd();
-                }
-                else
-                    Console.WriteLine("Error!!! File text not found!");
-            }
-        }
-        /// <summary>
-        /// Запись в файл
-        /// </summary>
-        /// <param name="nameFile"></param>
-        /// <param name="typeFile"></param>
-        public void WriteOfTextInFile(string nameFile, string typeFile)
-        {
-            using (StreamWriter sw = new StreamWriter(nameFile))
-            {
-                if (sw != null)
-                {
-                    for (int i = 0; i < typeFile.Length; i++)
-                        sw.Write(typeFile[i]);
-                }
-                else
-                    Console.WriteLine("Error!!! File for writer not found!");
-            }
-        }
-        private void SetColorConsole(bool fl)
-        {
-            if (fl)
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            else
-                Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }
